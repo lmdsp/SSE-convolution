@@ -24,9 +24,20 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
  */
+
+#if defined(_WIN32) || defined(__APPLE__)
+#define HAVE_GLIBC 0
+#else
+#define HAVE_GLIBC 1
+#endif // _WIN32 || __APPLE__
+
 #include <stdio.h>
 #include <stdlib.h>
+
+#if HAVE_GLIBC
 #include <glib.h>
+#endif // HAVE_GLIBC
+
 #include <sys/time.h>
 
 #include "convolve.h"
@@ -102,9 +113,17 @@ int main()
     printf("Lowest test time: %1.3f microseconds per loop.\n", 
             min_delta);
 
-    for (int i=0; i<(INPUT_LENGTH-KERNEL_LENGTH+1); i++){
-        if (TEST_OUTPUT_CORRECT[i] != test_output[i]){
+    for (int i=0; i<(INPUT_LENGTH-KERNEL_LENGTH+1); i++)
+	{
+        if (TEST_OUTPUT_CORRECT[i] != test_output[i])
+		{
+			
+#if HAVE_GLIBC
             g_error("Computed convolution is incorrect.");
+#else
+			fprintf(stderr, "Computed convolution is incorrect.");
+#endif // HAVE_GLIBC
+			
             return(-1);
         }
     }

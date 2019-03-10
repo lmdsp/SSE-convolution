@@ -53,8 +53,17 @@ if (NOT WIN32 AND NOT APPLE)
   set(CMAKE_CXXFLAGS "${CMAKE_CXXFLAGS} ${GLIB_CFLAGS}")
 endif (NOT WIN32 AND NOT APPLE)
 
+function (enable_avx target)
+  if (XCODE)
+    set_property (TARGET ${target} PROPERTY XCODE_ATTRIBUTE_CLANG_X86_VECTOR_INSTRUCTIONS avx)
+    target_compile_options(${target} PRIVATE -mfma)
+  endif (XCODE)
+endfunction(enable_avx)
+
 add_library(convolve_funcs SHARED convolve.h convolve.c 
     convolve_2d.h convolve_2d.c multiple_convolve.c)
+
+enable_avx(convolve_funcs)
 
 set(_test_convolve_sources
     test_data.h          test_data.c
@@ -70,5 +79,6 @@ target_link_libraries(test_convolve
 else ()
   target_link_libraries(test_convolve
       convolve_funcs)
+  enable_avx(test_convolve)
 endif (NOT WIN32 AND NOT APPLE)
 
