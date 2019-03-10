@@ -6,6 +6,8 @@ project(SSE_CONV_TEST)
 # Set the minimum required version of cmake
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
+if (MSVC)
+else()
 # Enable warnings and make them errors
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
@@ -14,6 +16,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
 
 # Magic to set GCC-specific compile flags (to turn on optimisation).
 set(GCC_FLAGS "-std=c99 -Wall -O3 -msse3 -mavx -march=native")
+endif (MSVC)
+
 add_definitions( -DSSE3 )
 add_definitions( -DAVX )
 
@@ -38,14 +42,16 @@ if(UNIX AND NOT WIN32)
 endif(UNIX AND NOT WIN32)
 
 # Find the pkg-config support macros
-find_package(PkgConfig)
+if (NOT WIN32 AND NOT APPLE)
+  find_package(PkgConfig)
 
-# Attempt to locate and use GLib.
-pkg_check_modules(GLIB REQUIRED glib-2.0)
-include_directories(${GLIB_INCLUDE_DIRS})
-link_directories(${GLIB_LIBRARY_DIRS})
-set(CMAKE_CFLAGS "${CMAKE_CFLAGS} ${GLIB_CFLAGS}")
-set(CMAKE_CXXFLAGS "${CMAKE_CXXFLAGS} ${GLIB_CFLAGS}")
+  # Attempt to locate and use GLib.
+  pkg_check_modules(GLIB REQUIRED glib-2.0)
+  include_directories(${GLIB_INCLUDE_DIRS})
+  link_directories(${GLIB_LIBRARY_DIRS})
+  set(CMAKE_CFLAGS "${CMAKE_CFLAGS} ${GLIB_CFLAGS}")
+  set(CMAKE_CXXFLAGS "${CMAKE_CXXFLAGS} ${GLIB_CFLAGS}")
+endif (NOT WIN32 AND NOT APPLE)
 
 add_library(convolve_funcs SHARED convolve.h convolve.c 
     convolve_2d.h convolve_2d.c multiple_convolve.c)
@@ -56,7 +62,13 @@ set(_test_convolve_sources
 )
 
 add_executable(test_convolve ${_test_convolve_sources})
+
+if (NOT WIN32 AND NOT APPLE)
 target_link_libraries(test_convolve
     convolve_funcs
     ${GLIB_LIBRARIES})
+else ()
+  target_link_libraries(test_convolve
+      convolve_funcs)
+endif (NOT WIN32 AND NOT APPLE)
 
